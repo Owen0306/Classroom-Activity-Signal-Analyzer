@@ -1,0 +1,193 @@
+Changelog
+
+Version 2.0 adds photo ingestion and monitoring Continuous capture remains available, with temporal confirmation as an optional mode.
+
+Added
+-----
+
+General-purpose photo analysis
+------------------------------
+
+- Added single-photo input through --image-path or --source image.
+- Added folder input through --images-dir or --source images.
+- Added recursive photo discovery through --recursive.
+- Added natural filename ordering and relative-path sample identifiers for folder
+  input, preserving distinct files with the same name in different subdirectories.
+- Added Unicode-compatible image reading and annotated-image writing.
+- Added support for JPG, JPEG, PNG, BMP, TIFF, and WebP photographs.
+- Added photo-folder monitoring through --watch, with a configurable polling
+  interval. New and modified files are processed after their size and modification
+  time stabilize across consecutive scans.
+- Added revision-specific sample identifiers for monitored files, allowing an
+  updated photograph at the same path to receive a separate result.
+- Added independent state handling for each photograph. Photo processing does not
+  inherit posture candidates, confirmation timers, or participant tracks from a
+  previously processed image.
+- Photo input works without a prescribed participant count, seating grid, or room
+  arrangement. The detector's configurable processing limit is separate from an
+  optional expected headcount.
+
+Explicit uncertainty and evidence
+---------------------------------
+
+- Added unknown as an evidence state alongside the five posture categories.
+- Added distinct observation statuses: instant, confirmed, pending, and
+  unknown.
+- Added rawSignal to preserve the current posture candidate separately from the
+  final observableSignal.
+- Added structured reason codes for unavailable poses, unreliable landmarks,
+  insufficient body size, ambiguous orientation, and failed pose processing.
+- Added geometric evidence fields, including shoulder width, normalized wrist
+  elevation, nose position, and relevant writing-posture geometry.
+- Added the actual person-detector score as detectionConfidence.
+- Added separate landmark-visibility summaries. These describe available evidence
+  and are not represented as probabilities of correct posture classification.
+- Added rule-version, threshold, detector-setting, and runtime-version metadata
+  to make saved results interpretable after configuration changes.
+
+Detailed results and coverage
+-----------------------------
+
+- Introduced JSON result schema 2.0, including application version, run status,
+  stop reason, input metadata, session summaries, and per-sample records.
+- Added a complete record for every processed input, including readable images
+  with no detections and unreadable images with explicit failure information.
+- Added per-detection records containing photo-local observation IDs, bounding
+  boxes, raw and final labels, evidence status, measurements, and quality fields.
+- Added automatic CSV export next to the JSON result file.
+- Added optional annotated-image output through --annotated-dir, with compact
+  posture labels and detected, classified, unknown, and optional missing counts.
+- Added processed, failed, and empty sample counts to session summaries.
+- Added separate detected, classified, unknown, and pending observation counts.
+- Added classification coverage and clearly named ratios among all detections,
+  including unknown and pending observations in the denominator.
+- Added optional expected-count shortfalls and excess-detection counts through
+  --expected-participants. No expected count is assumed when the option is absent.
+- Added explicit warnings when the configured detector limit is reached.
+- Added atomic JSON checkpoints after each sample, preserving the last complete
+  checkpoint if a later write or processing step fails.
+
+Optional location labels and manual comparison
+----------------------------------------------
+
+- Added --seat-map for installations that need fixed-camera location labels.
+  Configurations support any number of uniquely named regions and arbitrary layouts.
+- Added normalized region coordinates, allowing seat regions to scale with image
+  dimensions while retaining the same camera composition.
+- Added assignment using a visible pose nose, with an upper-bounding-box anchor
+  when that landmark is unavailable.
+- Added explicit handling of overlapping regions, multiple detections claiming
+  one region, and detections outside configured regions. Ambiguous assignments
+  remain unassigned.
+- Added seat-level counts, ratios, and lists of regions without an unambiguous
+  assignment. These fields distinguish location coverage from category totals.
+- Added a separate evaluate.py command for comparing saved predictions with
+  manually supplied sample_id, seat_id, and signal labels.
+- Added per-seat comparisons, a confusion matrix, per-category precision, recall
+  and F1, label coverage, and unmatched-label reporting.
+- Unknown, missed, and failed predictions remain in the comparison denominator.
+  Human labels explicitly marked unknown are reported separately and excluded.
+
+Changed
+-------
+
+Five-category posture model
+---------------------------
+
+- Standardized prediction output on five observable categories: forward facing,
+  writing posture, raised hand, head down, and side / peer facing.
+- Merged possible_peer_facing_interaction into side_facing_posture.
+- Merged sustained_head_down_posture into head_down_posture.
+- Removed depth and duration distinctions from the head-down category.
+- Replaced crop-relative coordinate thresholds with pixel geometry normalized by
+  visible shoulder width for the principal posture rules.
+- Strengthened writing-posture evidence by combining a lowered head with visible
+  wrist positions and bent-arm geometry. Low wrists alone no longer trigger writing.
+- Strengthened side-facing evidence by combining lateral head offset with a facial
+  asymmetry cue. The label does not assert that an interaction is occurring.
+- Required positive head and eye evidence for forward-facing classification.
+  Unmatched or ambiguous geometry now produces unknown.
+- Established explicit classification priority: raised hand, side facing, writing
+  posture, head down, then forward facing.
+- Added JSON rule overrides through --rules-config and a supplied default-rule
+  example. Effective values are saved with each run.
+
+Capture and confirmation behavior
+---------------------------------
+
+- Made snapshot the default analysis mode for photos, recorded video, cameras,
+  and RTSP input. Each selected frame is analyzed independently in this mode.
+- Added opt-in temporal analysis for continuous capture sources.
+- Added --confirmation-delay and --no-confirmation-delay. Temporal mode enables
+  confirmation by default; independent-photo and snapshot workflows reject an
+  enabled duration-confirmation setting.
+- Pending temporal candidates now return unknown while preserving their current
+  raw category. Previously confirmed categories are not reused as current labels.
+- Reset confirmation continuity after missing detections, unusable posture
+  evidence, track loss, non-increasing timestamps, or excessive observation gaps.
+- Added a configurable maximum observation gap, defaulting to 1.5 times the
+  capture sampling interval.
+- Limited temporary tracking to adjacent observations. Missing tracks are dropped
+  instead of retaining stale posture state through a disappearance interval.
+- Retained media timestamps for recorded video and monotonic timing for live
+  capture. Independent photos have no invented duration timestamps.
+- Added a consecutive live-capture read-failure limit and bounded-run control
+  through --max-samples.
+
+Detection, presentation, and defaults
+-------------------------------------
+
+- Increased the default detector input size to 1280, with --imgsz available
+  for adjusting processing cost and small-person visibility.
+- Set the default person-detection threshold to 0.25.
+- Added configurable duplicate-box suppression through --iou-threshold,
+  defaulting to 0.5.
+- Added --max-detections, defaulting to 300, as an explicit detector limit.
+- Changed the default capture sampling interval from one second to five seconds.
+- Made preview windows opt-in through --display; retained --no-display.
+- Changed the default result destination to output/results.json.
+- Replaced the activity-index timeline and review-flag charts with posture
+  distribution and detection/evidence coverage charts.
+- Separated failed inputs from successful zero-detection samples in charts.
+- Added source/option consistency checks, numeric bounds, configuration checks,
+  and protection against placing generated images inside a scanned photo input.
+- Kept image processing local and made annotated-image storage explicit.
+- Reorganized implementation by function, with concise English single-line
+  comments for functional blocks.
+
+Fixed
+-----
+
+- Missing body landmarks no longer become forward-facing observations.
+- Missing pose or face evidence no longer creates a maximum activity score.
+- A first-frame head-down or side-facing photograph is no longer forced into a
+  forward-facing default while waiting for a video-oriented confirmation timer.
+- A change from a previously confirmed posture no longer displays the stale
+  category throughout the new candidate's confirmation period.
+- Missing observations no longer count toward uninterrupted confirmation spans.
+- No-person frames and unreadable photographs are no longer silently omitted
+  from result accounting.
+- Category totals no longer provide the only available record: individual
+  predictions and optional location assignments can be inspected directly.
+- Wider or taller person crops no longer alter the principal rule thresholds
+  solely by changing normalized crop coordinates.
+- Low wrist position no longer overrides side-facing evidence by itself.
+- Ambiguous seat-region matches no longer produce an arbitrary location label.
+- Undefined ratios are written as null instead of presenting misleading values.
+- Recoverable input and per-sample analysis failures retain explicit records and
+  contribute to the run's error status.
+- Resource-cleanup failures no longer prevent final result saving, and chart
+  generation failures are recorded separately in result metadata.
+
+Removed
+-------
+
+- Removed the heuristic activity_index and its percentage-style overlays.
+- Removed aggregate observableActivityIndex and meanObservableActivityIndex.
+- Removed fixed posture/face confidence constants and the combined maximum score.
+- Removed the face-mesh gaze heuristic and associated gaze-derived score weights.
+- Removed posture-based review flags and their aggregate totals.
+- Removed the separate peer-interaction and sustained-head-down prediction classes.
+- Removed direct pandas and seaborn requirements from chart generation; plotting
+  now uses Matplotlib directly.
+
