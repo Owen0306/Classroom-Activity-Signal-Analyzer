@@ -8,6 +8,8 @@ rules, then saves results and generates charts for review.
 The project supports classroom analytics experiments, teaching demonstrations,
 and research prototypes where image processing should stay on the local machine.
 
+We have a lots of updates in version 2. Please check the "/Classroom-Activity-Signal-Analyzer - Version 2" directory! 
+
 ## Data Use Declaration
 
 The application does not identify students or build persistent participant
