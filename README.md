@@ -228,13 +228,7 @@ Detailed changes and output-schema migration notes are in CHANGELOG.txt.
 |-- result_writer.py        # JSON and CSV output
 |-- visualization.py        # Result charts
 |-- evaluate.py             # Optional comparison with supplied seat labels
-|-- version.py
 |-- requirements.txt
-|-- examples/               # Synthetic configuration examples
-|-- tests/                  # Synthetic regression checks
-|-- docs/                   # Usage, testing notes, and public figures
-|-- tools/render_docs.py    # Rebuild diagrams and aggregate-only chart
-|-- CHANGELOG.txt
 `-- LICENSE
 ```
 
