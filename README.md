@@ -178,7 +178,7 @@ evaluation set, which consists of 500 samples collected from 10 volunteers.
 | Extra detections per image, lower is better       | 4.14  | **0.88**  |
 | Person-count mean absolute error, lower is better | 3.76  | **0.84**  |
 
-![F1 comparison](docs\assets\benchmark-f1.png)
+![F1 comparison](docs/assets/benchmark-f1.png)
 
 The comparison shows higher macro F1 and fewer extra detections for v2, while
 overall accuracy remains low. Its unknown rate must be considered alongside
